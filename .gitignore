@@ -22,7 +22,7 @@ firmware/*.sav
 firmware/*.rej
 
 # Ignore KiCad backup files and generated output
-kicad/*-backup/
+kicad/*-backups/
 kicad/*.sch-bak
 kicad/*.kicad_pcb-bak
 kicad/*.b#*
