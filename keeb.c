@@ -21,7 +21,7 @@ ISR(INT0_vect){
     // Modifier checks for shift/ctrl/ whatever/ might not need this one?
     // static bc need to keep their state every time the ISR is called
 
-    if (PIND & (1<<DATA_PIN)) { // PD4 High, read data bit
+    if (PINB & (1<<DATA_PIN)) { // PD4 High, read data bit
         ScanCode |= ScanCodeBit; // reads ScanCode at bit position speicifed by ScanCodeBit
     }
     ScanCodeBit<<=1;
@@ -37,4 +37,8 @@ ISR(INT0_vect){
     // Sending thru serial w UART
     while (!(UCSR0A & (1 << UDRE0))); // Wait for the UART buffer to be ready
     UDR0 = key;
+}
+
+void keeb_init(){
+
 }
