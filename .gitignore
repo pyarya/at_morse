@@ -1,52 +1,55 @@
-# Prerequisites
+# Ignore MPLAB X IDE specific files and directories
+firmware/nbproject/
+firmware/dist/
+firmware/build/
+*.swp
+*.bak
 *.d
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+# Ignore object files and compiled binaries
+firmware/*.o
+firmware/*.elf
+firmware/*.hex
+firmware/*.map
+firmware/*.cof
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# Ignore temporary and backup files
+firmware/*~
+firmware/*.log
+firmware/*.tmp
+firmware/*.cache
+firmware/*.sav
+firmware/*.rej
 
-# Precompiled Headers
-*.gch
-*.pch
+# Ignore KiCad backup files and generated output
+kicad/*-backup/
+kicad/*.sch-bak
+kicad/*.kicad_pcb-bak
+kicad/*.b#*
+kicad/*.bck
+kicad/*.dcm
+kicad/*.~*
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+# Ignore simulation and output files
+kicad/simulation/
+kicad/*.net
+kicad/*.xml
+kicad/*.pro.*
+kicad/*.csv
+kicad/*.json
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+# Ignore generated Gerber files
+kicad/*.gbr
+kicad/*.gbl
+kicad/*.gbt
+kicad/*.gbo
+kicad/*.gbp
+kicad/*.gts
+kicad/*.gto
+kicad/*.gbs
+kicad/*.gm*
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+# Ignore other common IDE or OS-specific files
+.DS_Store
+Thumbs.db
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
