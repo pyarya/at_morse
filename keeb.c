@@ -20,8 +20,9 @@ ISR(INT0_vect){
     // ScanCodeBit tracks which bit position of the scan code we are on
     // Modifier checks for shift/ctrl/ whatever/ might not need this one?
     // static bc need to keep their state every time the ISR is called
-
-    if (PINB & (1<<DATA_PIN)) { // PD4 High, read data bit
+    //
+    // NOTE: i think need to change interrupt pins to PD2 and PD3 for Keyboard and move LCD pins
+    if (PIND & (1<<DATA_PIN)) { // PB1 High, read data bit
         ScanCode |= ScanCodeBit; // reads ScanCode at bit position speicifed by ScanCodeBit
     }
     ScanCodeBit<<=1;
@@ -39,6 +40,9 @@ ISR(INT0_vect){
     UDR0 = key;
 }
 
-void keeb_init(){
-
+void keeb_init()
+    EICRA = ; // should be falling edge interrupt
+    PORTD |= (1<<CLK_PIN) | (1<<DATA_PIN);
+    EIMSK |= (1<<INT0);
+    sei();
 }
