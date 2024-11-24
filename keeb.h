@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // pin definitions
-#define DATA_PIN PD4 // data pin 
+#define DATA_PIN PD3 // data pin 
 #define CLOCK_PIN PD2 // clock pin INT0
 
 // ring buffer for handling the stream of input data
