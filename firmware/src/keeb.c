@@ -1,6 +1,6 @@
 // tried implementing for avr-c from www.technoblogy.com/show?1GYR
 
-#include "keeb.h"
+#include "../include/keeb.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
