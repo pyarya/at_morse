@@ -8,10 +8,10 @@
 #define DATA_PIN PD3 // data pin 
 
 // ring buffer for handling the stream of input data
-#define KEYBOARD_BUFFER_SIZE 16 
+#define KBD_BUFFER_SIZE 16 
 
-void keeb_init(void); // initialize keyboard ports and interrupts for system
-char keeb_read(void); // reading characters from buffer
-uint8_t keeb_available(void); // checking character availability
+void kbd_init(void); // initialize keyboard ports and interrupts for system
+char kbd_read(void); // reading characters from buffer
+uint8_t kbd_available(void); // checking character availability
 
 #endif
