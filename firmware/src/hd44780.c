@@ -14,12 +14,12 @@
  * $Id: hd44780.c 2002 2009-06-25 20:21:16Z joerg_wunsch $
  */
 
-#include "defines.h"
+#include "../include/defines.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <avr/io.h>
 #include <util/delay.h>
-#include "hd44780.h"
+#include "../include/hd44780.h"
 
 #define GLUE(a, b)     a##b
 
