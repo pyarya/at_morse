@@ -12,13 +12,10 @@
  */
 
 #include "../include/defines.h"
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <avr/io.h>
-#include <util/delay.h>
 #include "../include/hd44780.h"
 #include "../include/lcd.h"
+#include <avr/io.h>
+#include <util/delay.h>
 
 /*
  * Setup the LCD controller.  First, call the hardware initialization

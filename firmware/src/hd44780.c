@@ -15,11 +15,9 @@
  */
 
 #include "../include/defines.h"
-#include <stdbool.h>
-#include <stdint.h>
+#include "../include/hd44780.h"
 #include <avr/io.h>
 #include <util/delay.h>
-#include "../include/hd44780.h"
 
 #define GLUE(a, b)     a##b
 
