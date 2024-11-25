@@ -2,6 +2,7 @@
 #define PS2_KEYBOARD_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // pin definitions
 #define CLK_PIN PD2 // clock pin INT0
