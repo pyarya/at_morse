@@ -66,10 +66,19 @@ ISR(INT0_vect){
         
         buffer_write(input); //write to buffer
     }
-    // Sending thru serial w UART 
-    // NOTE: could also store in buffer but this helps check if keypresses are working for now
-    while (!(UCSR0A & (1 << UDRE0))); // Wait for the UART buffer to be ready
-    UDR0 = key;
+    // Sending thru serial w UART, might help check if keypresses are working for now
+    // while (!(UCSR0A & (1 << UDRE0))); // Wait for the UART buffer to be ready
+    // UDR0 = input;
+}
+
+void kbd_read(void){
+    // read from buffer
+}
+
+bool kbd_available(void) {
+    // checks if characters are available
+    return (buffer_head != buffer tail); // if head and tail are not in the same postion, available
+
 }
 
 void kbd_init() {
