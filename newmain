@@ -1,0 +1,124 @@
+/*
+ * File:   newavr-main.c
+ * Author: main
+ *
+ * Created on November 30, 2024, 2:35 PM
+ */
+
+#define F_CPU 14745600UL
+
+#include "defines.h"
+
+#include <ctype.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+
+#include <util/delay.h>
+
+#include "lcd.h"
+
+FILE lcd_str = FDEV_SETUP_STREAM ( lcd_putchar , NULL , _FDEV_SETUP_WRITE ) ; 
+
+ISR ( TIMER0_OVF_vect ){
+
+    overflow++;
+
+}
+
+void init() {
+    DDRB &= ~( 1 << PD3 ); //Enable as input (Mode select button)
+    PORTB |= (1 << PD3 ); //Enable pull up resistor
+}
+volatile uint16_t overflow = 0;
+        
+int main ( void ) {
+    init();
+    
+    char buffer[];
+    
+    uint8_t state = 0; //TX mode = 0x00, RX mode = 0xFF, TX default state
+    
+    while ( 1 ) {
+    
+        if ( ~( PIND & ( 1 << PD3 ) ) ) { //If the button is pressed
+        
+            state = ~state;
+        
+        }
+        
+        if ( state = 0 ) {
+            
+            fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+            fprintf (&lcd_str, "Transmitting"); //Prints input
+        
+            while ( ( PIND & ( 1 << PD5 ) ) );
+            char transmit;
+            
+            fprintf (&lcd_str, "\x1b\xc0%c", buffer); //Prints input
+        
+        }
+        else {
+            
+            fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+            fprintf (&lcd_str, "Receiving"); //Prints input
+        
+            char recieve;
+            
+            fprintf (&lcd_str, "\x1b\xc0%c", buffer); //Prints input
+        
+        }
+           
+    }
+    
+}
+
+char transmit () {
+    
+    int t0, t1, time, i;
+    char buffer[];
+    
+    i = 0;
+    
+    if ( ~( PIND & ( 1 << PD5 ) ) ) {
+    
+        t0 = TCNT0;
+    
+    }
+    
+    while ( ~( PIND & ( 1 << PD5 ) ) );
+    
+    t1 = TCNT0;
+    
+    time = ( t1 - t0 + ( overflow * 65536 ) ) / F_CPU;
+    
+    if ( overflow = 1 ){
+    
+        overflow = 0;
+    
+    }
+    
+    if ( 0.2 < time <= 1.5 ) {
+    
+        buffer[i] = '.';
+    
+    }
+    else if ( 1.5 < time < 3.5 ) {
+    
+        buffer[i] = '_';
+    
+    }
+    
+    i++;
+    
+}
+
+char recieve () {
+
+    
+
+}
+
+
