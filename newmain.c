@@ -16,6 +16,7 @@
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
+#include <avr/interrupt.h>
 
 #include <util/delay.h>
 
@@ -61,10 +62,7 @@ char morse[8] = {0};
 
 FILE lcd_str = FDEV_SETUP_STREAM ( lcd_putchar , NULL , _FDEV_SETUP_WRITE ) ; 
 
-ISR ( TIMER0_OVF_vect ){
-    // Indicate that a overflow has occured
-    overflow++;
-}
+
 
 ISR(TIMER1_CAPT_vect) {
     if (capture == 0) {
@@ -102,7 +100,7 @@ void init() {
     DDRB |= (1 << PB3);
 
     lcd_init();
-    _delay_ms(100);
+    _delay_ms(1000);
 
     sei();
 
@@ -155,7 +153,7 @@ void recieve(uint16_t *on_time, uint16_t *off_time) {
     // Reset for the next measurement
     capture = 0;
 
-    bintoascii(on_time, off_time);
+    //bintoascii(on_time, off_time);
 }
 
 uint16_t get_timeBUTTON() {
@@ -226,33 +224,28 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
         
 int main ( void ) {
     init();
-    
     uint8_t state = 0; //TX mode = 0x00, RX mode = 0xFF, TX default state
     
     while ( 1 ) {
         
         // check device state
         if (PINC & (1 << PC1)) { 
-            state = 1;
-        } else {
-              state = 0; 
-        }
-        
-        if ( state == 0 ) {
-            fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
-            fprintf (&lcd_str, "Transmitting"); //Prints input
-        
-            while (!( PINB & ( 1 << PB2 ) ) );
-            char transmit();    
-        }
-        else {
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "Receiving"); //Prints input
         
             uint16_t on_time = 0, off_time = 0;
             recieve(&on_time, &off_time); 
+        } 
+        else{
+            fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+            fprintf (&lcd_str, "Transmitting"); //Prints input
+        
+            while (!( PINB & ( 1 << PB2 ) ) );
+            char transmit(); 
         }
-           
+       
+        
+
     }
     
 }
