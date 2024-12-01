@@ -154,6 +154,7 @@ void recieve(uint16_t *on_time, uint16_t *off_time) {
     capture = 0;
 
     //bintoascii(on_time, off_time);
+    return;
 }
 
 uint16_t get_timeBUTTON() {
@@ -243,7 +244,8 @@ int main ( void ) {
             while (!( PINB & ( 1 << PB2 ) ) );
             char transmit(); 
         }
-       
+        fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+        fprintf (&lcd_str, "past receive!!!"); //Prints input
         
 
     }
