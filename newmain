@@ -44,7 +44,7 @@ const char *morse_table[36] = {
 const char ascii_table[36] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 
-int DOTMIN = 400;
+int DOTMIN = 200;
 int DOTMAX = 600;
 int DASHMIN = 1400;
 int DASHMAX = 1600;
@@ -175,11 +175,11 @@ char transmit () {
 
     if (time > DOT && time < DASH) {
         PORTD |= (1 << PB3); // IR Output
-        _delay_ms(100);
+        _delay_ms(500);
         PORTD &= ~(1 << PB3);
     } else if (time >= DASH && time < TIMEOUT) {
         PORTD |= (1 << PD4); // IR Output
-        _delay_ms(300);
+        _delay_ms(1500);
         PORTD &= ~(1 << PD4);
     }
     return 0;
@@ -193,13 +193,13 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
         //realistically this can be changed if this translate is only set to trigger every time the signal changes
         if (DOTMIN <= on && on <= DOTMAX) // window for placing a dot into the morse buffer
         {
-            morse[morseCounter] = ".";
-            morseCounter++1;
+            morse[morseCounter] = '.';
+            morseCounter++;
         }
         if (DASHMIN <= on && on <= DASHMAX)// window for placing a dash into the morse buffer
         {
-            morse[morseCounter] = "-";
-            morseCounter++1;
+            morse[morseCounter] = '-';
+            morseCounter++;
         }
         
         if (LETTERMIN <= off && off <= LETTERMAX) {
@@ -218,7 +218,7 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
         if (SPACEMIN <= off && off <= SPACEMAX) //  signal is off long enough to place a space character, clearing morse buffer
         {
             morse[0] = '\0';
-            morsecounter = 0;
+            morseCounter = 0;
             fprintf(&lcd_str, " ");
         }
 }
@@ -238,7 +238,7 @@ int main ( void ) {
               state = 0; 
         }
         
-        if ( state = 0 ) {
+        if ( state == 0 ) {
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "Transmitting"); //Prints input
         
@@ -249,7 +249,8 @@ int main ( void ) {
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "Receiving"); //Prints input
         
-            recieve();
+            uint16_t on_time = 0, off_time = 0;
+            recieve(&on_time, &off_time); 
         }
            
     }
