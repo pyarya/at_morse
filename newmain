@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -122,3 +123,73 @@ char recieve () {
 }
 
 
+
+// Morse Code Lookup Table
+const char *morse_table[36] = {
+    ".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", // A-J
+    "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", "...", "-", // K-T
+    "..-", "...-", ".--", "-..-", "-.--", "--..",                       // U-Z
+    "-----", ".----", "..---", "...--", "....-", ".....", "-....", "--...", // 0-7
+    "---..", "----."                                                // 8-9
+};
+const char ascii_table[36] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+
+int DOTMIN = 400;
+int DOTMAX = 600;
+int DASHMIN = 1400;
+int DASHMAX = 1600;
+int LETTERMIN = 1400;
+int LETTERMAX = 1600;
+int SPACEMIN = 3400;
+int SPACEMAX = 3600;
+
+int morseCounter = 0;
+char morse[8];
+
+void bintoascii(int onLast, int on, int offLast, int off)// this needs to change depending on how the timer variables are implemented
+{
+    if ((off & on)==0){// this condition is to check if the signal changes from on to off. If that is true, then proceed with translation
+        //realistically this can be changed if this translate is only set to trigger every time the signal changes
+        if (DOTMIN <= onLast && onLast <= DOTMAX) // window for placing a dot into the morse buffer
+        {
+            morse[morsecCounter] = ".";
+            morseCounter++1;
+        }
+        if (DASHMIN <= onLast && onLast <= DASHMAX)// window for placing a dash into the morse buffer
+        {
+            morse[morsecCounter] = "-";
+            morseCounter++1;
+        }
+        
+        if (LETTERMIN <= offLast && offLast <= LETTERMAX) // signal is off long enough to translate the morse buffer into a letter, then clear the morse buffer
+        {
+           // Compare the target string with each string in the list
+            int found = 0;  // Flag to indicate if the string was found
+            morse[morseCounter] = '\0'; // Null-terminate the Morse code
+            for (int i = 0; i < 36; i++) {
+                if (strcmp(list[i], target) == 0) {  // strcmp returns 0 if strings are equal
+                    found = 1;
+                    fprintf(&lcd_str, "%s", ascii_table[i]);
+                    break;
+                }
+
+                if (!found) {
+                    fprintf(&lcd_str, "?");
+                }
+        
+            morse[0] = '\0';
+            morsecounter = 0;
+        }   
+                    
+        if (SPACEMIN <= offLast && offLast <= SPACEMAX) //  signal is off long enough to place a space character, clearing morse buffer
+        {
+            morse[0] = '\0';
+            morsecounter = 0;
+            fprintf(&lcd_str, " ");
+        }
+        
+     
+    }
+  
+}
