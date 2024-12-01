@@ -44,7 +44,6 @@ const char *morse_table[36] = {
 };
 const char ascii_table[36] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-
 int DOTMIN = 200;
 int DOTMAX = 600;
 int DASHMIN = 1400;
@@ -57,12 +56,7 @@ int SPACEMAX = 3600;
 int morseCounter = 0;
 char morse[8] = {0};
 
-
-
-
 FILE lcd_str = FDEV_SETUP_STREAM ( lcd_putchar , NULL , _FDEV_SETUP_WRITE ) ; 
-
-
 
 ISR(TIMER1_CAPT_vect) {
     if (capture == 0) {
@@ -113,13 +107,16 @@ void recieve(uint16_t *on_time, uint16_t *off_time) {
 
     // Wait for first capture (signal rising edge)
     while (capture != 1); 
-
+    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+    fprintf (&lcd_str, "past cap1!!!"); //Prints input
     cli(); // Disable interrupts to safely read values
     uint16_t start1 = c_start; // Capture the first start time
     sei();
 
     // Wait for second capture (signal falling edge)
     while (capture != 2);
+    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+    fprintf (&lcd_str, "past cap2!!!"); //Prints input
 
     cli();
     uint16_t end1 = c_end; // Capture the end of the first signal (falling edge)
@@ -138,6 +135,9 @@ void recieve(uint16_t *on_time, uint16_t *off_time) {
     // Wait for third capture (signal rising edge)
     while (capture != 1);
 
+    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+    fprintf (&lcd_str, "past cap3!!!"); //Prints input
+    //
     cli();
     uint16_t start2 = c_start; // Capture the start of the next signal (rising edge)
     sei();
@@ -154,7 +154,6 @@ void recieve(uint16_t *on_time, uint16_t *off_time) {
     capture = 0;
 
     //bintoascii(on_time, off_time);
-    return;
 }
 
 uint16_t get_timeBUTTON() {
@@ -242,7 +241,7 @@ int main ( void ) {
             fprintf (&lcd_str, "Transmitting"); //Prints input
         
             while (!( PINB & ( 1 << PB2 ) ) );
-            char transmit(); 
+            transmit(); 
         }
         fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
         fprintf (&lcd_str, "past receive!!!"); //Prints input
