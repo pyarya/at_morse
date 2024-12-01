@@ -20,37 +20,208 @@
 
 #include "lcd.h"
 
+
+// Timing and Timeout
+#define DOT 200
+#define DASH 1500
+#define TIMEOUT 3000
+
+volatile uint16_t overflow =0;
+
+volatile uint16_t capture = 0;
+volatile uint16_t c_start = 0;
+volatile uint16_t c_end = 0;
+
+// Morse Code Lookup Table
+const char *morse_table[36] = {
+    ".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", // A-J
+    "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", "...", "-", // K-T
+    "..-", "...-", ".--", "-..-", "-.--", "--..",                       // U-Z
+    "-----", ".----", "..---", "...--", "....-", ".....", "-....", "--...", // 0-7
+    "---..", "----."                                                // 8-9
+};
+const char ascii_table[36] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+
+int DOTMIN = 400;
+int DOTMAX = 600;
+int DASHMIN = 1400;
+int DASHMAX = 1600;
+int LETTERMIN = 1400;
+int LETTERMAX = 1600;
+int SPACEMIN = 3400;
+int SPACEMAX = 3600;
+
+int morseCounter = 0;
+char morse[8] = {0};
+
+volatile uint16_t overflow = 0;
+
+
 FILE lcd_str = FDEV_SETUP_STREAM ( lcd_putchar , NULL , _FDEV_SETUP_WRITE ) ; 
 
 ISR ( TIMER0_OVF_vect ){
-
+    // Indicate that a overflow has occured
     overflow++;
+}
 
+ISR(TIMER1_CAPT_vect) {
+    if (capture == 0) {
+        c_start = ICR1;
+        overflow = 0;
+        TCCR1B ^= (1<<ICES1);
+        capture =1;
+    } else {
+        c_end = ICR1;
+        TCCR1B ^= (1<<ICES1);
+        capture = 2;
+    }
 }
 
 void init() {
+    // Input switch to change mode !!!!!!!!!!!!
+    
+    // Button
     DDRB &= ~( 1 << PD3 ); //Enable as input (Mode select button)
     PORTB |= (1 << PD3 ); //Enable pull up resistor
+
+    TCCR0A = 0; // Normal mode
+    TIMSK1 = (1 << ICIE1) | (1 << TOIE1); // Enable Timer Overflow Interrupt
+
+    // IR Reciever as input
+    DDRC &= ~(1 << PC0);
+    PORTC |= (1 << PC0);
+
+    lcd_init();
+    _delay_ms(100);
+
+    sei();
+
 }
-volatile uint16_t overflow = 0;
+
+uint16_t get_timeIR() {
+    uint32_t ticks, time;
+    overflow = 0;
+
+    while(capture != 2); // Wait for capture in timing interrupt to finish
+    // Disable interrupts until data has been read
+    cli();
+
+    if (c_end > c_start) {
+        ticks = e_end - c_start;
+    } else {
+        ticks = (65536 - c_start) +c_end + (overflow * 65536);
+    }
+
+    capture = 0;
+    sei();
+    
+    time = (ticks * 8Ul) / (F_CPU / 1000UL);
+
+    return (time); 
+}
+
+uint16_t get_timeBUTTON() {
+    int t0 = TCNT0;
+    overflow = 0;
+
+    while ( ~( PINB & ( 1 << PB2 ) ) );
+
+    int t1 = TCNT0;
+    int time = (( t1 - t0) +(overflow * 65536))/ (F_CPU)/1000;
+
+    return (time); 
+}
+
+char transmit () {
+    uint16_t time = get_timeBUTTON();
+
+    if (time > DOT && time < DASH) {
+        PORTD |= (1 << PD4); // IR Output
+        _delay_ms(100);
+        PORTD &= ~(1 << PD4);
+    } else if (time >= DASH && time < TIMEOUT) {
+        PORTD |= (1 << PD4); // IR Output
+        _delay_ms(300);
+        PORTD &= ~(1 << PD4);
+    }
+    return 0;
+}
+
+char recieve () {
+   uint16_t time = get_timeIR();
+    if (time > DOT && time < DASH) {
+        morse[morseCounter++] = '.';
+    } else if (time >= DASH && time < TIMEOUT) {
+        morse[morseCounter++] = '-';
+    }
+    return 0;
+}
+
+
+void bintoascii(int onLast, int on, int offLast, int off)// this needs to change depending on how the timer variables are implemented
+{
+    if ((off & on)==0){// this condition is to check if the signal changes from on to off. If that is true, then proceed with translation
+        //realistically this can be changed if this translate is only set to trigger every time the signal changes
+        if (DOTMIN <= onLast && onLast <= DOTMAX) // window for placing a dot into the morse buffer
+        {
+            morse[morsecCounter] = ".";
+            morseCounter++1;
+        }
+        if (DASHMIN <= onLast && onLast <= DASHMAX)// window for placing a dash into the morse buffer
+        {
+            morse[morsecCounter] = "-";
+            morseCounter++1;
+        }
+        
+        if (LETTERMIN <= offLast && offLast <= LETTERMAX) // signal is off long enough to translate the morse buffer into a letter, then clear the morse buffer
+        {
+           // Compare the target string with each string in the list
+            int found = 0;  // Flag to indicate if the string was found
+            morse[morseCounter] = '\0'; // Null-terminate the Morse code
+            for (int i = 0; i < 36; i++) {
+                if (strcmp(list[i], target) == 0) {  // strcmp returns 0 if strings are equal
+                    found = 1;
+                    fprintf(&lcd_str, "%s", ascii_table[i]);
+                    break;
+                }
+
+                if (!found) {
+                    fprintf(&lcd_str, "?");
+                }
+        
+            morse[0] = '\0';
+            morsecounter = 0;
+        }   
+                    
+        if (SPACEMIN <= offLast && offLast <= SPACEMAX) //  signal is off long enough to place a space character, clearing morse buffer
+        {
+            morse[0] = '\0';
+            morsecounter = 0;
+            fprintf(&lcd_str, " ");
+        }
+        
+     
+    }
+  
+}
+}
         
 int main ( void ) {
     init();
     
-    char buffer[];
-    
     uint8_t state = 0; //TX mode = 0x00, RX mode = 0xFF, TX default state
     
     while ( 1 ) {
-    
-        if ( ~( PIND & ( 1 << PD3 ) ) ) { //If the button is pressed
         
-            state = ~state;
-        
+        // check device state
+        if (PINC & (1 << PC1)) { 
+            state = 1;
+        } else {
+              state = 0; 
         }
         
         if ( state = 0 ) {
-            
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "Transmitting"); //Prints input
         
@@ -58,15 +229,13 @@ int main ( void ) {
             char transmit;
             
             fprintf (&lcd_str, "\x1b\xc0%c", buffer); //Prints input
-        
         }
         else {
-            
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "Receiving"); //Prints input
         
             char recieve;
-            
+            bintoascii();
             fprintf (&lcd_str, "\x1b\xc0%c", buffer); //Prints input
         
         }
@@ -74,51 +243,4 @@ int main ( void ) {
     }
     
 }
-
-char transmit () {
-    
-    int t0, t1, time, i;
-    char buffer[];
-    
-    i = 0;
-    
-    if ( ~( PIND & ( 1 << PD5 ) ) ) {
-    
-        t0 = TCNT0;
-    
-    }
-    
-    while ( ~( PIND & ( 1 << PD5 ) ) );
-    
-    t1 = TCNT0;
-    
-    time = ( t1 - t0 + ( overflow * 65536 ) ) / F_CPU;
-    
-    if ( overflow = 1 ){
-    
-        overflow = 0;
-    
-    }
-    
-    if ( 0.2 < time <= 1.5 ) {
-    
-        buffer[i] = '.';
-    
-    }
-    else if ( 1.5 < time < 3.5 ) {
-    
-        buffer[i] = '_';
-    
-    }
-    
-    i++;
-    
-}
-
-char recieve () {
-
-    
-
-}
-
 
