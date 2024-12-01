@@ -56,7 +56,7 @@ int SPACEMAX = 3600;
 int morseCounter = 0;
 char morse[8] = {0};
 
-volatile uint16_t overflow = 0;
+
 
 
 FILE lcd_str = FDEV_SETUP_STREAM ( lcd_putchar , NULL , _FDEV_SETUP_WRITE ) ; 
@@ -80,14 +80,16 @@ ISR(TIMER1_CAPT_vect) {
 }
 
 void init() {
-    // Input switch to change mode !!!!!!!!!!!!
+    
     
     // Button
-    DDRB &= ~( 1 << PD3 ); //Enable as input (Mode select button)
-    PORTB |= (1 << PD3 ); //Enable pull up resistor
+    DDRB &= ~( 1 << PB2 ); //Enable as input INPUT BUTTON
+    PORTB |= (1 << PB2 ); //Enable pull up resistor
 
+// Input switch to change mode !!!!!!!!!!!!
     DDRC &= ~( 1 << PC1 ); //Enable as input (Mode select button)
     PORTC |= (1 << PC1 ); //Enable pull up resistor
+
 
     TCCR0A = 0; // Normal mode
     TIMSK1 = (1 << ICIE1) | (1 << TOIE1); // Enable Timer Overflow Interrupt
@@ -95,6 +97,9 @@ void init() {
     // IR Reciever as input
     DDRC &= ~(1 << PC0);
     PORTC |= (1 << PC0);
+
+    // IR PB3 Output Emitter
+    DDRB |= (1 << PB3);
 
     lcd_init();
     _delay_ms(100);
@@ -169,9 +174,9 @@ char transmit () {
     uint16_t time = get_timeBUTTON();
 
     if (time > DOT && time < DASH) {
-        PORTD |= (1 << PD4); // IR Output
+        PORTD |= (1 << PB3); // IR Output
         _delay_ms(100);
-        PORTD &= ~(1 << PD4);
+        PORTD &= ~(1 << PB3);
     } else if (time >= DASH && time < TIMEOUT) {
         PORTD |= (1 << PD4); // IR Output
         _delay_ms(300);
@@ -188,35 +193,27 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
         //realistically this can be changed if this translate is only set to trigger every time the signal changes
         if (DOTMIN <= on && on <= DOTMAX) // window for placing a dot into the morse buffer
         {
-            morse[morsecCounter] = ".";
+            morse[morseCounter] = ".";
             morseCounter++1;
         }
         if (DASHMIN <= on && on <= DASHMAX)// window for placing a dash into the morse buffer
         {
-            morse[morsecCounter] = "-";
+            morse[morseCounter] = "-";
             morseCounter++1;
         }
         
-        if (LETTERMIN <= off && off <= LETTERMAX) // signal is off long enough to translate the morse buffer into a letter, then clear the morse buffer
-        {
-           // Compare the target string with each string in the list
-            int found = 0;  // Flag to indicate if the string was found
-            morse[morseCounter] = '\0'; // Null-terminate the Morse code
+        if (LETTERMIN <= off && off <= LETTERMAX) {
+            morse[morseCounter] = '\0'; // Null-terminate Morse buffer
             for (int i = 0; i < 36; i++) {
-                if (strcmp(list[i], target) == 0) {  // strcmp returns 0 if strings are equal
-                    found = 1;
-                    fprintf(&lcd_str, "%s", ascii_table[i]);
+                if (strcmp(morse, morse_table[i]) == 0) {
+                    fprintf(&lcd_str, "%c", ascii_table[i]);
                     break;
                 }
-
-                if (!found) {
-                    fprintf(&lcd_str, "?");
-                }
-        
+            }
+            morseCounter = 0; // Reset buffer
             morse[0] = '\0';
-            morsecounter = 0;
             }   
-        }
+        
                     
         if (SPACEMIN <= off && off <= SPACEMAX) //  signal is off long enough to place a space character, clearing morse buffer
         {
@@ -245,19 +242,14 @@ int main ( void ) {
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "Transmitting"); //Prints input
         
-            while ( ( PIND & ( 1 << PD5 ) ) );
-            char transmit();
-            
-            fprintf (&lcd_str, "\x1b\xc0%c", buffer); //Prints input
+            while (!( PINB & ( 1 << PB2 ) ) );
+            char transmit();    
         }
         else {
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "Receiving"); //Prints input
         
             recieve();
-            bintoascii();
-            fprintf (&lcd_str, "\x1b\xc0%c", buffer); //Prints input
-        
         }
            
     }
