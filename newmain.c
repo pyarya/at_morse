@@ -45,11 +45,11 @@ const char *morse_table[36] = {
 const char ascii_table[36] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 int DOTMIN = 200;
-int DOTMAX = 600;
-int DASHMIN = 1400;
-int DASHMAX = 1600;
-int LETTERMIN = 1400;
-int LETTERMAX = 1600;
+int DOTMAX = 1500;
+int DASHMIN = 1501;
+int DASHMAX = 2500;
+int LETTERMIN = 1501;
+int LETTERMAX = 2500;
 int SPACEMIN = 3400;
 int SPACEMAX = 3600;
 
@@ -82,7 +82,8 @@ void init() {
     DDRC &= ~( 1 << PC1 ); //Enable as input (Mode select button)
     PORTC |= (1 << PC1 ); //Enable pull up resistor
 
-
+    TCCR0B |=(1<<CS00);
+    TCNT0 = 0;
     TCCR0A = 0; // Normal mode
     TIMSK1 = (1 << ICIE1) | (1 << TOIE1); // Enable Timer Overflow Interrupt
 
@@ -96,7 +97,7 @@ void init() {
     PORTB |= (1 << PB3);
 
     lcd_init();
-    _delay_ms(1000);
+    _delay_ms(10);
 
     sei();
 
@@ -104,26 +105,22 @@ void init() {
 
 // REVIEW LATER
 void recieve(uint16_t *on_time, uint16_t *off_time) {
-    uint32_t ticks;
-    overflow = 0;
-
-    // Wait for first capture (signal rising edge)
-    while (capture != 1); 
     fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
-    fprintf (&lcd_str, "past cap1!!!"); //Prints input
-    cli(); // Disable interrupts to safely read values
-    uint16_t start1 = c_start; // Capture the first start time
+    fprintf (&lcd_str, "AWAITING"); //Prints input
+    uint32_t ticks;
+    capture = 0;
+
+   // Wait for first rising edge
+    while (capture != 1);
+    cli();
+    uint16_t start1 = c_start; // Capture start time of the first pulse
     sei();
 
-    // Wait for second capture (signal falling edge)
-    while (capture != 2);
-    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
-    fprintf (&lcd_str, "past cap2!!!"); //Prints input
-
+    // Wait for second rising edge
+    capture = 0;
+    while (capture != 1);
     cli();
-    uint16_t end1 = c_end; // Capture the end of the first signal (falling edge)
-    overflow = 0; // Reset overflow for the next duration
-    capture = 0; // Reset capture flag
+    uint16_t end1 = c_start; // Capture start time of the second pulse
     sei();
 
     // Calculate ON time
@@ -139,6 +136,7 @@ void recieve(uint16_t *on_time, uint16_t *off_time) {
 
     fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
     fprintf (&lcd_str, "past cap3!!!"); //Prints input
+    _delay_ms(100);
     //
     cli();
     uint16_t start2 = c_start; // Capture the start of the next signal (rising edge)
@@ -154,34 +152,52 @@ void recieve(uint16_t *on_time, uint16_t *off_time) {
 
     // Reset for the next measurement
     capture = 0;
-
-    //bintoascii(on_time, off_time);
+    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+    fprintf (&lcd_str, "NOW PRINTING..."); //Prints input
+    _delay_ms(100);
+    bintoascii(on_time, off_time);
 }
 
 uint16_t get_timeBUTTON() {
-    int t0 = TCNT0;
-    overflow = 0;
-
-    while ( ~( PINB & ( 1 << PB2 ) ) );
-
-    int t1 = TCNT0;
-    int time = ((t1 - t0) +(overflow * 65536))/ (F_CPU)/1000;
-
+    int time =0;
+    while (!( PINB & ( 1 << PB2 ) ) ) {
+        
+        _delay_ms(1);  // Small delay
+        time += 1;  // Increment the hold time by the delay amount
+    }
+    time = time*10;
     return (time); 
 }
 
 char transmit () {
+    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+    fprintf (&lcd_str, "GETTING INPUT"); //Prints input
     uint16_t time = get_timeBUTTON();
-
     if (time > DOT && time < DASH) {
-        PORTD |= (1 << PB3); // IR Output
-        _delay_ms(500);
-        PORTD &= ~(1 << PB3);
+        PORTB &= ~(1 << PB3); // IR Output
+        fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+        fprintf (&lcd_str, "TRANSMITTING ."); //Prints input
+        _delay_ms(100);
+        PORTB |= (1 << PB3);
+        _delay_ms(100);
+        PORTB &= ~(1 << PB3); // IR Output
+        _delay_ms(100);
+        PORTB |= (1 << PB3);
     } else if (time >= DASH && time < TIMEOUT) {
-        PORTD |= (1 << PD4); // IR Output
-        _delay_ms(1500);
-        PORTD &= ~(1 << PD4);
+        PORTB &= ~(1 << PB3); // IR Output
+        fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+        fprintf (&lcd_str, "TRANSMITTING -"); //Prints input
+        _delay_ms(200);
+        PORTB |= (1 << PB3);
+        _delay_ms(200);
+        PORTB |= (1 << PB3);
+        
+    } else {
+        // Handle Timeout
     }
+    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+    fprintf (&lcd_str, "DATA TRANSMITTED"); //Prints input
+    _delay_ms(50);
     return 0;
 }
 
@@ -207,13 +223,17 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
             int found = 0;  // Flag to indicate if the string was found
             for (int i = 0; i < 36; i++) {
                 if (strcmp(morse, morse_table[i]) == 0) {
+                    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
                     fprintf(&lcd_str, "%c", ascii_table[i]);
+                     _delay_ms(500);
                     found = 1;
                     break;
                 }   
             }
             if (!found) {
                     fprintf(&lcd_str, "?");
+                    fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
+                     _delay_ms(500);
                 }
             
             morseCounter = 0; // Reset buffer
@@ -225,7 +245,9 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
         {
             morse[0] = '\0';
             morseCounter = 0;
+            fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf(&lcd_str, " ");
+            _delay_ms(100);
         }
 }
 
@@ -239,16 +261,16 @@ int main ( void ) {
         // check device state
         if (PINC & (1 << PC1)) { 
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
-            fprintf (&lcd_str, "Receiving"); //Prints input
+            fprintf (&lcd_str, "RECEIVE MODE"); //Prints input
         
             uint16_t on_time = 0, off_time = 0;
             recieve(&on_time, &off_time); 
         } 
         else{
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
-            fprintf (&lcd_str, "Transmitting"); //Prints input
+            fprintf (&lcd_str, "TRANSMIT MODE"); //Prints input
         
-            while (!( PINB & ( 1 << PB2 ) ) );
+            while (( PINB & ( 1 << PB2 ) ) );
             transmit(); 
         }
         fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
