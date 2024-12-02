@@ -87,8 +87,8 @@ void init() {
     TIMSK1 = (1 << ICIE1) | (1 << TOIE1); // Enable Timer Overflow Interrupt
 
     // IR Reciever as input
-    DDRC &= ~(1 << PC0);
-    PORTC |= (1 << PC0);
+    DDRB &= ~(1 << PB0);
+    PORTB |= (1 << PB0);
 
     // IR PB3 Output Emitter
     DDRB |= (1 << PB3);
@@ -207,6 +207,7 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
                     fprintf(&lcd_str, "%c", ascii_table[i]);
                     break;
                 }
+                
             }
             morseCounter = 0; // Reset buffer
             morse[0] = '\0';
