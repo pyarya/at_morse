@@ -89,9 +89,11 @@ void init() {
     // IR Reciever as input
     DDRB &= ~(1 << PB0);
     PORTB |= (1 << PB0);
+    
 
     // IR PB3 Output Emitter
     DDRB |= (1 << PB3);
+    PORTB |= (1 << PB3);
 
     lcd_init();
     _delay_ms(1000);
@@ -202,13 +204,18 @@ void bintoascii(int on, int off)// this needs to change depending on how the tim
         
         if (LETTERMIN <= off && off <= LETTERMAX) {
             morse[morseCounter] = '\0'; // Null-terminate Morse buffer
+            int found = 0;  // Flag to indicate if the string was found
             for (int i = 0; i < 36; i++) {
                 if (strcmp(morse, morse_table[i]) == 0) {
                     fprintf(&lcd_str, "%c", ascii_table[i]);
+                    found = 1;
                     break;
-                }
-                
+                }   
             }
+            if (!found) {
+                    fprintf(&lcd_str, "?");
+                }
+            
             morseCounter = 0; // Reset buffer
             morse[0] = '\0';
             }   
