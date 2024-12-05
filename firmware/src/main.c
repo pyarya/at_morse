@@ -9,13 +9,6 @@
 // Interrupt Variable, for finding time between received pulse
 volatile uint16_t capture = 0;
 
-// Definition of putCHAR function
-void putCHAR(int detectedCHAR);
-
-void IRtransmit(int delay, char *msg);
-
-void var_delay_ms(uint16_t delay);
-
 // Morse Code Lookup Table
 const char *morse_table[36] = {
     ".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", // A-J
