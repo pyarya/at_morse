@@ -27,10 +27,7 @@
 void putCHAR(int detectedCHAR);
 void IRtransmit(int delay, char *msg);
 void var_delay_ms(uint16_t delay);
-void lcd_init();
-void recieve();
-uint16_t get_timeBUTTON();
-char transmit();
+
 
 #endif	/* MAIN_H */
 
