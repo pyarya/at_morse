@@ -1,6 +1,6 @@
 
 # Ignore KiCad backup files and generated output
-kicad/*-backups/
+kicad/*-backups/*.zip
 kicad/*.sch-bak
 kicad/*.kicad_pcb-bak
 kicad/*.b#*
