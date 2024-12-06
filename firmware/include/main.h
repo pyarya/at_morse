@@ -23,6 +23,13 @@
 #define SPACE 2500 // Time for Space
 #define TIMEOUT 3500 
 
+// Pin Definitions
+#define BUZ PB1
+#define PBUTTON PB2
+#define MODE_SW PC1
+#define IR_RCV PB0
+#define IR_EMT PB3
+
 // prototypes
 void putCHAR(int detectedCHAR);
 void IRtransmit(int delay, char *msg);
