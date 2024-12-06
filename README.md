@@ -20,7 +20,7 @@ A morse code decoder programmed in avr-libC for the atmega328p. ECE 312: Embedde
 - 6.2V 0.5A Wall Power Supply
 
 ## Schematic
-![Schematic](Schematic.jpg)
+![Schematic](Schematic.png)
 
 ## Breadboard/Hardware
 ![Breadboard](Breadboard.jpg)
