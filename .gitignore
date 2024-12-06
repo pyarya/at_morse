@@ -1,28 +1,6 @@
-# Ignore MPLAB X IDE specific files and directories
-firmware/nbproject/
-firmware/dist/
-firmware/build/
-*.swp
-*.bak
-*.d
-
-# Ignore object files and compiled binaries
-firmware/*.o
-firmware/*.elf
-firmware/*.hex
-firmware/*.map
-firmware/*.cof
-
-# Ignore temporary and backup files
-firmware/*~
-firmware/*.log
-firmware/*.tmp
-firmware/*.cache
-firmware/*.sav
-firmware/*.rej
 
 # Ignore KiCad backup files and generated output
-kicad/*-backups/
+kicad/*-backups/*.zip
 kicad/*.sch-bak
 kicad/*.kicad_pcb-bak
 kicad/*.b#*
@@ -52,4 +30,4 @@ kicad/*.gm*
 # Ignore other common IDE or OS-specific files
 .DS_Store
 Thumbs.db
-
+.vscode/*

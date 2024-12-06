@@ -3,38 +3,11 @@
  * Sean Theriault, Daniel Lee, Evan Bak, Aryan Aryal
  */
 
-#define F_CPU 14745600UL
-
-#include "defines.h"
-#include <ctype.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-#include <avr/interrupt.h>
-#include <util/delay.h>
-#include "lcd.h"
-
-
-
-// Input Timing
-#define DOT 300 // Time for DOT
-#define DASH 900 // Time for DASH
-#define ENDCHAR 1500 // Time for end char
-#define SPACE 2500 // Time for Space
-#define TIMEOUT 3500 
-
+#include "../includes/main.h"
+#include "../includes/lcd.h"
 
 // Interrupt Variable, for finding time between received pulse
 volatile uint16_t capture = 0;
-
-// Definition of putCHAR function
-void putCHAR(int detectedCHAR);
-
-void IRtransmit(int delay, char *msg);
-
-void var_delay_ms(uint16_t delay);
 
 // Morse Code Lookup Table
 const char *morse_table[36] = {
@@ -59,20 +32,19 @@ ISR(TIMER1_CAPT_vect) {
     }
 }
 
-
 void init() {
     
     // Buzzer Setup
-    DDRB |= (1 << PB1); 
-    PORTB &= ~(1 << PB1);
+    DDRB |= (1 << BUZ); 
+    PORTB &= ~(1 << BUZ);
     
     // Input Button
-    DDRB &= ~( 1 << PB2 ); 
-    PORTB |= (1 << PB2 ); 
+    DDRB &= ~( 1 << PBUTTON ); 
+    PORTB |= (1 << PBUTTON ); 
 
     // Switch to Change Operation Mode
-    DDRC &= ~( 1 << PC1 );
-    PORTC |= (1 << PC1 ); 
+    DDRC &= ~( 1 << MODE_SW );
+    PORTC |= (1 << MODE_SW ); 
 
     
     // Do we still need this?
@@ -83,12 +55,12 @@ void init() {
     // ****
     
     // IR Receiver 
-    DDRB &= ~(1 << PB0);
-    PORTB |= (1 << PB0);
+    DDRB &= ~(1 << IR_RCV);
+    PORTB |= (1 << IR_RCV);
     
     // IR Emitter
-    DDRB |= (1 << PB3);
-    PORTB |= (1 << PB3);
+    DDRB |= (1 << IR_EMT);
+    PORTB |= (1 << IR_EMT);
     
     // Initialization
     lcd_init();
@@ -102,9 +74,9 @@ void init() {
 void buzz(int buzzTIME ){
     int buzzCLK = 0;
     while (buzzCLK < buzzTIME) {
-        PORTB |= (1 << PB1); 
+        PORTB |= (1 << BUZ); 
         _delay_ms(0.5);
-        PORTB &=~ (1 << PB1); 
+        PORTB &=~ (1 << BUZ); 
         _delay_ms(0.5);
         buzzCLK++;
     }
@@ -173,7 +145,7 @@ void recieve() {
  */
 uint16_t get_timeBUTTON() {
     int time =0;
-    while (!( PINB & ( 1 << PB2 ) ) ) {
+    while (!( PINB & ( 1 << PBUTTON ) ) ) {
         _delay_ms(1);  // wait
         time += 1;  // update time
         if (time < DASH/10) {
@@ -245,17 +217,17 @@ char transmit () {
 void IRtransmit(int delay, char *msg) {
         fprintf (&lcd_str, "\x1b\x01" ); 
         fprintf (&lcd_str, "%s.",msg); 
-        PORTB &= ~(1 << PB3); // HIGH PULSE
+        PORTB &= ~(1 << IR_EMT); // HIGH PULSE
         _delay_ms(100);         
         fprintf (&lcd_str, "\x1b\x01" ); 
         fprintf (&lcd_str, "%s..",msg); 
-        PORTB |= (1 << PB3); // Hold Low
+        PORTB |= (1 << IR_EMT); // Hold Low
         var_delay_ms(delay); // For time matched to transmitting character
         fprintf (&lcd_str, "\x1b\x01" ); 
         fprintf (&lcd_str, "%s...",msg); 
-        PORTB &= ~(1 << PB3);   // 2nd HIGH PULSE, signals end of data transmission
+        PORTB &= ~(1 << IR_EMT);   // 2nd HIGH PULSE, signals end of data transmission
         _delay_ms(100);         
-        PORTB |= (1 << PB3);    
+        PORTB |= (1 << IR_EMT);    
 }
 
 // Used to operate variable delays 
@@ -312,7 +284,7 @@ int main ( void ) {
     while ( 1 ) {
         
         // check device state
-        if (PINC & (1 << PC1)) { 
+        if (PINC & (1 << MODE_SW)) { 
             // Receive Mode
             fprintf(&lcd_str, "\x1b\x01");
             fprintf(&lcd_str, "RECEIVE MODE"); 
@@ -327,12 +299,12 @@ int main ( void ) {
         } 
         else{
             // Transmit Mode
-            PORTB |= (1 << PB3);  // LOW (ensure starting state)
+            PORTB |= (1 << IR_EMT);  // LOW (ensure starting state)
             fprintf (&lcd_str, "\x1b\x01" ); //Clears the display
             fprintf (&lcd_str, "TRANSMIT MODE"); //Prints input
             
             // Wait for input button press
-            while (( PINB & ( 1 << PB2 ) ) );
+            while (( PINB & ( 1 << PBUTTON ) ) );
             transmit(); 
         }
     }
