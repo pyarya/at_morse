@@ -1,5 +1,5 @@
 # at_morse
-A morse code decoder programmed in avr-libC for the atmega328p. ECE 312: Embedded Systems - Final Project.
+A morse code decoder programmed in avr-libC for the atmega328p.
 
 ## Breadboard ~ Hardware
 ![Breadboard](Breadboard.jpg)
