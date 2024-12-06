@@ -1,6 +1,12 @@
 # at_morse
 A morse code decoder programmed in avr-libC for the atmega328p. ECE 312: Embedded Systems - Final Project.
 
+## Breadboard ~ Hardware
+![Breadboard](Breadboard.jpg)
+
+## Schematic
+![Schematic](Schematic.png)
+
 ## Parts List
 #### Device
 - ATmega328p(x2)
@@ -19,8 +25,5 @@ A morse code decoder programmed in avr-libC for the atmega328p. ECE 312: Embedde
 - 22pf Capacitor(x1)
 - 6.2V 0.5A Wall Power Supply
 
-## Schematic
-![Schematic](Schematic.png)
 
-## Breadboard/Hardware
-![Breadboard](Breadboard.jpg)
+
